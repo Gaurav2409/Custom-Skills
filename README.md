@@ -6,6 +6,7 @@ A catalog of reusable AI coding assistant skills.
 
 | Skill | Description |
 |-------|-------------|
+| **excel-extractor** | Extract content from large Excel (`.xlsx`) files — profile sheets, stream 100k+ row files without memory errors, export to CSV/JSON/JSONL, detect entity relationships, and prepare data for ingestion into a knowledge base or agent pipeline |
 | **llm-knowledge-base** | Build and maintain a personal LLM-powered knowledge base — ingest raw documents, compile an Obsidian-compatible wiki, run Q&A, generate slide decks and charts, and lint the wiki for health |
 | **web-clipper** | Clip web pages to local Markdown files with downloaded images — renders JS-heavy pages via Playwright, extracts article content, and saves clean `.md` files with locally referenced images |
 
