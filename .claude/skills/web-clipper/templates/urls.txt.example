@@ -1,0 +1,10 @@
+# One URL per line. Lines starting with # are ignored. Blank lines are skipped.
+
+# Example: static page
+https://example.com
+
+# Example: JavaScript-rendered docs site
+# https://docs.anthropic.com/en/docs/about-claude/models/overview
+
+# Example: news article
+# https://www.bbc.com/news/technology
