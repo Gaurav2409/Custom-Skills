@@ -1,68 +1,90 @@
-# skills-repo
+# Dialogue Extractor
 
-A catalog of reusable AI coding assistant skills.
+A professional VST3 plugin that isolates clean dialogue and voiceover from mixed audio — removing music beds, SFX, backing vocals, and ambient noise using a four-stage AI separation pipeline.
 
-## Skills
-
-| Skill | Description |
-|-------|-------------|
-| **excel-extractor** | Extract content from large Excel (`.xlsx`) files — profile sheets, stream 100k+ row files without memory errors, export to CSV/JSON/JSONL, detect entity relationships, and prepare data for ingestion into a knowledge base or agent pipeline |
-| **llm-knowledge-base** | Build and maintain a personal LLM-powered knowledge base — ingest raw documents, compile an Obsidian-compatible wiki, run Q&A, generate slide decks and charts, and lint the wiki for health |
-| **web-clipper** | Clip web pages to local Markdown files with downloaded images — renders JS-heavy pages via Playwright, extracts article content, and saves clean `.md` files with locally referenced images |
-
-Skills are located in `.claude/skills/` and can be invoked by AI coding assistants (e.g. Claude Code).
-
-## Repository Structure
-
-```
-.claude/skills/
-  <skill-name>/
-    SKILL.md              # Main skill definition with frontmatter
-    templates/            # Optional template files (scripts, configs) to copy into user projects
-    references/           # Optional reference documentation
-```
-
-## Skill File Format
-
-Each skill has a `SKILL.md` with YAML frontmatter:
-
-```markdown
 ---
-name: skill-name
-description: When this skill should trigger and what it does
+
+## What It Does
+
+Dialogue Extractor runs audio through four successive AI models, each stripping a different layer of unwanted content:
+
+| Pass | Model | Removes |
+| ---- | ----- | ------- |
+| 1 | UVR-MDX-NET-Inst_HQ_3 | Music beds, instrumentation, SFX |
+| 2 | UVR-MDX-NET-KARA_2 | Backing vocals, choir, harmony |
+| 3 | MelBand RoFormer | Residual bleed (state-of-the-art SDR 12.6 dB) |
+| 4 | DeepFilterNet3 | Broadband noise, reverb tail |
+
+The output is a spectrally clean dialogue/voiceover track normalised to −14 LUFS (EBU R128 streaming standard), exported as 24-bit stereo WAV.
+
 ---
-# Skill Title
-[Instructions for the AI assistant]
+
+## Installation
+
+Copy `Dialogue Extractor.vst3` to `~/Library/Audio/Plug-Ins/VST3/`, then rescan plugins in your DAW (Reaper, Ableton Live, Cubase, Studio One, Bitwig).
+
+---
+
+## How to Use
+
+1. Insert **Dialogue Extractor** as an effect on any audio track in your DAW
+2. Press **● CAPTURE** — the plugin records audio passing through it in real time
+3. Play the region you want to process; press **■ STOP** when done
+4. Press **▶ PROCESS** — the four-stage pipeline runs in the background with per-pass progress
+5. When complete, the plugin switches to Playback mode — processed audio plays back through the plugin output
+6. Press **EXPORT WAV** to save the clean dialogue as a 24-bit WAV file
+
+---
+
+## UI
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ◆ DIALOGUE EXTRACTOR                          SOUNDSCAPER AI   v1.0.0  │
+│──────────────────────────────────────────────────────────────────────────│
+│  INPUT ────────────────────────────────────────────────────────────────  │
+│  [ Orange waveform — captured input audio ]                               │
+│  OUTPUT ───────────────────────────────────────────────────────────────  │
+│  [ Cyan waveform — processed output audio ]                               │
+│                                                                           │
+│  SEPARATION CHAIN ─────────────────────────────────────────────────────  │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐                │
+│  │ ● PASS 1       [ON/OFF] │  │ ● PASS 2       [ON/OFF] │                │
+│  │ MDX-Net Instrumental    │  │ MDX-Net KARA            │                │
+│  └─────────────────────────┘  └─────────────────────────┘                │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐                │
+│  │ ● PASS 3       [ON/OFF] │  │ ● PASS 4       [ON/OFF] │                │
+│  │ MelBand RoFormer        │  │ DeepFilterNet3          │                │
+│  └─────────────────────────┘  └─────────────────────────┘                │
+│──────────────────────────────────────────────────────────────────────────│
+│  [ ● CAPTURE ]  [ ━━━━━━━━━━━━━━━━ Pass 3/4 · 23s left ]  [ EXPORT ]  │
+│  IN ████████░ −12.3 dBFS          OUT ████████████ −14.0 LUFS            │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Usage
+Each pass card shows real-time state (Waiting → Processing → Done ✓). Passes can be toggled individually for A/B comparison or faster processing.
 
-### Local (Claude Code)
+---
 
-Copy `.claude/skills/` into your project root or your global `~/.claude/` directory:
+## Requirements
 
-```bash
-# Project-level (applies to this project only)
-cp -r .claude/skills/<skill-name> /path/to/your/project/.claude/skills/
+- macOS 12+ (Monterey or later), Apple Silicon (arm64)
+- ONNX Runtime: `brew install onnxruntime`
+- Python 3.11 + `audio-separator` (Pass 3): `pip install audio-separator`
+- Python 3.11 + DeepFilterNet (Pass 4): `pip install deepfilternet`
 
-# Global (applies to all projects)
-cp -r .claude/skills/<skill-name> ~/.claude/skills/
-```
+---
 
-Then invoke the skill in Claude Code by describing what you want to do — Claude will automatically match the request to the skill.
+## Output Specification
 
-### Skill Marketplaces
+| Property | Value |
+|----------|-------|
+| Sample rate | 44.1 kHz |
+| Bit depth | 24-bit PCM WAV |
+| Channels | Stereo |
+| Integrated loudness | −14 LUFS (EBU R128) |
+| True peak | −1 dBTP |
 
-To publish a skill to a marketplace:
+---
 
-1. Ensure `SKILL.md` has complete frontmatter (`name`, `description`)
-2. Include all supporting `templates/` and `references/` files
-3. Package the skill directory as a zip or submit as a PR to the marketplace registry
-
-## Adding a New Skill
-
-1. Create directory: `.claude/skills/<skill-name>/`
-2. Add `SKILL.md` with frontmatter and step-by-step instructions
-3. Add `templates/` for files to copy into user projects
-4. Add `references/` for supporting documentation
-5. Update the skills table in this README
+*Dialogue Extractor — Soundscaper AI v1.0.0*

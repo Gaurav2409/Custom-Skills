@@ -1,0 +1,38 @@
+{
+  "name": "my-knowledge-base",
+  "mode": "recall",
+  "version": "3.0",
+
+  "wiki": {
+    "split_index_at": 80
+  },
+
+  "search": {
+    "backend": "naive",
+    "qmd": {
+      "mcp_http": false,
+      "mcp_port": 8181
+    }
+  },
+
+  "lint": {
+    "thresholds": {
+      "stub_words": 120,
+      "stale_days": 180,
+      "open_questions_max": 5,
+      "confidence_low_pct": 0.20,
+      "unfooted_pct_max": 0.10,
+      "cq_coverage_target": 0.90
+    }
+  },
+
+  "git": {
+    "enabled": true,
+    "auto_commit": true
+  },
+
+  "federation": {
+    "enabled": false,
+    "peers": []
+  }
+}
