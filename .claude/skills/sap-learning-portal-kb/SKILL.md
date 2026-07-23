@@ -418,6 +418,44 @@ The skill is fully resumable at each phase:
 
 ---
 
+## Search API — Finding Courses by Topic
+
+Use this to discover relevant courses before ingesting, or to check if a topic is already covered.
+
+```python
+import urllib.request, json, urllib.parse
+
+BASE_LP = "https://learning.sap.com"
+headers = {"Accept": "application/json", "User-Agent": "Mozilla/5.0", "Referer": BASE_LP + "/"}
+
+def lp_search(query, limit=15, page=1):
+    """Search SAP Learning Portal for courses matching a topic query.
+    
+    API: getCards(types='["search-page"]',filters='{"content":"QUERY","locale":"en-US"}',sort='',limit=N,page=P)
+    NOTE: Use types='["search-page"]' — NOT "standalone-course" (returns 400 error).
+    The query goes in filters.content, not as a URL param.
+    """
+    filters = json.dumps({"content": query, "locale": "en-US"})
+    raw = f"getCards(types='[\"search-page\"]',filters='{filters}',sort='',limit={limit},page={page})"
+    url = f"{BASE_LP}/service/learning/search/{urllib.parse.quote(raw, safe='()')}"
+    r = urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=12)
+    return json.loads(r.read()).get("value", {})
+
+# Example usage:
+result = lp_search("financial accounting S/4HANA FI", limit=20)
+courses = [c for c in result["results"] if c.get("subtype") == "Standalone-Course"]
+total = result["totalCount"]
+# Each course has: title, slug, type, subtype, level, description, duration, locale
+```
+
+**Notes on the search API:**
+- Returns up to 15 results per page; paginate with `page=2, 3, ...`
+- Results mix certifications, journeys, and courses — filter by `subtype == "Standalone-Course"`
+- To get ALL courses (no search query, full catalog), use `types='["standalone-course"]'` without content filter — returns ~3,900 courses paginated
+- The search API does NOT filter by locale reliably — filter client-side on `slug` (skip slugs ending in `-de`, `-fr`, `-es`, `-ko`, `-zh`) and title (skip `| DE`, `| ES`, etc.)
+
+---
+
 ## Karpathy Depth Checklist
 
 Before marking compile complete, verify each article has:
