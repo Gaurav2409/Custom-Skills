@@ -22,6 +22,41 @@ from pathlib import Path
 
 MAX_FILE_SIZE = 500 * 1024  # 500 KB
 
+# Extensions with no LLM-readable value in a documentation KB
+EXCLUDED_EXTENSIONS = {
+    # Raster images — binary, not LLM-readable text
+    ".png", ".jpg", ".jpeg", ".gif", ".webp",
+    # Binary diagram source files (not text-readable)
+    ".vsdx",
+    # Binary office files
+    ".pptx", ".docx",
+    # PDFs — binary; not directly processable in the raw pipeline
+    ".pdf",
+    # Code files — no architecture doc value in this KB
+    ".ts", ".js", ".groovy", ".css",
+    # Build/deploy config
+    ".npmrc", ".lock",
+    # NOTE: .puml, .plantuml, .svg, .drawio, .mmd are KEPT — they are
+    # text-based architecture diagram sources with LLM-readable content.
+}
+
+# Specific filenames to exclude regardless of extension
+EXCLUDED_FILENAMES = {
+    "Dockerfile", ".dockerignore", ".gitignore", ".gitmodules",
+    "pytest.ini", ".webmanifest", "package-lock.json", "yarn.lock",
+}
+
+# Path segment prefixes — skip any file whose relative path starts with these
+EXCLUDED_PATH_PREFIXES = (
+    ".github/",          # CI/CD workflows
+    "components/",       # Helm charts and Kubernetes deployment manifests
+    ".pipeline/",        # SAP pipeline configs
+    ".registry/",        # Agent onboarding registry tickets (ephemeral)
+    "test/fixtures/",    # Test fixture data
+    "test/",             # Test files generally
+    "kyma/deployment-resources/",  # Kubernetes deployment values
+)
+
 # Built-in cluster map (same as detect_delta.py — kept in sync manually)
 CLUSTER_MAP = {
     "ai-native-northstar-arch": "a", "durable-ai-agents": "a",
@@ -121,6 +156,10 @@ def main():
             try:
                 if not src.exists():
                     errors.append({"repo": repo_name, "file": rel, "error": "src not found"})
+                    continue
+                if src.suffix.lower() in EXCLUDED_EXTENSIONS or src.name in EXCLUDED_FILENAMES:
+                    continue
+                if any(rel.startswith(prefix) for prefix in EXCLUDED_PATH_PREFIXES):
                     continue
                 size = src.stat().st_size
                 if size > MAX_FILE_SIZE:
