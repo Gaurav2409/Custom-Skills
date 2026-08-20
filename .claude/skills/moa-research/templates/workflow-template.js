@@ -19,6 +19,9 @@ export const meta = {
     { title: 'Scaffold' },
     { title: 'Chunked MoA' },
     { title: 'Stitch' },
+    // Verify + Judge phases only appear in progress display when RUN_VERIFY /
+    // RUN_JUDGE are flipped to true below. Leave these entries here as
+    // documentation of the available shape.
     { title: 'Verify' },
     { title: 'Judge' },
   ],
@@ -36,9 +39,26 @@ const CORPUS_DIR  = `${KB}/corpus`
 // Where moa-call.sh was copied to.
 const MOA_CALL    = `${PROMPT_DIR}/orchestration/moa-call.sh`
 
-// Hermes preset. Confirm the active preset with `hermes moa list` before running.
-// deep-research: Sonnet + Opus + gpt-5.5 refs -> Opus aggregator. Best default.
-const MOA_PRESET  = 'deep-research'
+// Preset choice is PER CHUNK (see SKILL.md F8 + Cost optimisation section).
+// The template default is `default` — the cheaper Opus+gpt-5.5 two-family MoA.
+// Override per chunk by setting `preset: 'deep-research'` on the chunks that
+// genuinely benefit from cross-family diversity (novel synthesis, red-teams,
+// canonical extraction, adversarial verify). For structural chunks (matrix
+// fills, table cells, verbatim extraction), consider skipping MoA entirely and
+// using solo Opus at effort:high — 5-10x cheaper than any MoA.
+const DEFAULT_PRESET = 'default'
+
+// Verify + judgment phases default OFF (see SKILL.md F9). They cost ~1.5M
+// input tokens for a 3-lens/2-artifact/solo-and-MoA pass — usually more
+// expensive than a human read of the final artifact. Flip to true only when:
+//   (a) the artifact will be adopted without a human read, or
+//   (b) you have 20+ artifacts and can't read them all, or
+//   (c) you need automated CI-style gating.
+// When enabled: keep only identity-drift + layer-split lenses (drop the
+// topic-specific third lens), run at effort:medium not high, and verify only
+// the new artifact — never the solo baseline "for fair comparison".
+const RUN_VERIFY = false
+const RUN_JUDGE  = false
 
 // Workdir passed in via args.
 const workdir = (args && args.workdir) || null
@@ -79,8 +99,19 @@ HARD RULES:
 // For each chunk, define:
 //   id             — short identifier (A, B, C, ...)
 //   sections       — array of section headings this chunk emits
+//   preset         — OPTIONAL: 'default' (cheap, 2-family) or 'deep-research'
+//                    (expensive, 3-family). Omit to use DEFAULT_PRESET above.
+//                    Use 'deep-research' only on chunks that benefit from
+//                    cross-family diversity (novel synthesis, red-teams,
+//                    canonical extraction, adversarial framing). Use 'default'
+//                    or omit for structural / mid-density chunks. Consider
+//                    NOT using MoA at all (solo Opus effort:high) for
+//                    structural table-fill / verbatim-extraction chunks.
 //   inlines        — array of absolute paths inlined into the prompt via
-//                    ===INLINE:<path>=== directives (order preserved)
+//                    ===INLINE:<path>=== directives (order preserved).
+//                    Prefer PER-CHUNK CORPUS SLICES over the full corpus —
+//                    inlining only what the chunk needs saves 40-60% of
+//                    input tokens. Prep slices in the Scaffold phase.
 //   prompt         — chunk-specific instructions (what to emit, structural
 //                    contracts, target size). Do NOT include PROMPT_HEADER
 //                    or ===INLINE=== directives here — those are assembled
@@ -243,7 +274,7 @@ ${fullPrompt}
 PROMPT
 
 STEP 2. Run Bash. moa-call.sh will expand ===INLINE:<path>=== directives:
-  ${MOA_CALL.replace(/ /g, '\\ ')} ${MOA_PRESET} ${promptFile} ${rawFile}
+  ${MOA_CALL.replace(/ /g, '\\ ')} ${chunk.preset || DEFAULT_PRESET} ${promptFile} ${rawFile}
 
   NOTE: MoA calls of ~200 KB inlined input take 3-10 min. If Bash times out
   at 10 min, poll \`pgrep -fa moa-call.sh\` and wait a further 10 min before
@@ -297,17 +328,19 @@ Respond: "WROTE ${FINAL_ART} — <bytes> bytes" or "CHECKPOINT_FAILED — <reaso
 )
 
 // ---------------------------------------------------------------------------
-// Phase 4: Adversarial multi-lens verify (parallel)
+// Phase 4: Adversarial multi-lens verify (parallel) — OPTIONAL
 // ---------------------------------------------------------------------------
 
-phase('Verify')
+let lensVerdicts = []
+if (RUN_VERIFY) {
+  phase('Verify')
 
-function buildVerifierPrompt(lens) {
-  const checksList = lens.checks
-    .map(c => `- **${c.id}. ${c.question}** FAIL if: ${c.failCondition}${c.warnCondition ? ` | WARN if: ${c.warnCondition}` : ''}`)
-    .join('\n')
+  function buildVerifierPrompt(lens) {
+    const checksList = lens.checks
+      .map(c => `- **${c.id}. ${c.question}** FAIL if: ${c.failCondition}${c.warnCondition ? ` | WARN if: ${c.warnCondition}` : ''}`)
+      .join('\n')
 
-  return `You are an ADVERSARIAL verifier for the artifact at ${FINAL_ART}. Your job is to CATCH drift. Default to FAIL when ambiguous.
+    return `You are an ADVERSARIAL verifier for the artifact at ${FINAL_ART}. Your job is to CATCH drift. Default to FAIL when ambiguous.
 
 YOUR LENS: **${lens.label}** — ${lens.focus}
 Do NOT run checks outside this lens. Other lenses cover them.
@@ -336,28 +369,31 @@ Lens verdict rule:
 
 Then respond with ONE line:
   "LENS ${lens.id} VERDICT: <GO|REVIEW|NO-GO> — <F> fails, <W> warns"`
+  }
+
+  lensVerdicts = await parallel(
+    LENSES.map(lens => () =>
+      agent(buildVerifierPrompt(lens), {
+        label: `verify:${lens.label}`,
+        phase: 'Verify',
+        effort: 'medium',   // pattern-matching, not deep reasoning — see SKILL.md Cost optimisation
+      })
+    )
+  )
 }
 
-const lensVerdicts = await parallel(
-  LENSES.map(lens => () =>
-    agent(buildVerifierPrompt(lens), {
-      label: `verify:${lens.label}`,
-      phase: 'Verify',
-      effort: 'high',
-    })
-  )
-)
-
 // ---------------------------------------------------------------------------
-// Phase 5: Synthesis judge
+// Phase 5: Synthesis judge — OPTIONAL (requires RUN_VERIFY)
 // ---------------------------------------------------------------------------
 
-phase('Judge')
-
+let verdict = null
 const validationReport = `${OUT_DIR}/validation.md`
-const survived = lensVerdicts.filter(Boolean)
+if (RUN_JUDGE && RUN_VERIFY) {
+  phase('Judge')
 
-const judgePrompt = `You are the SYNTHESIS JUDGE combining ${LENSES.length} adversarial lens reports on the artifact at ${FINAL_ART}.
+  const survived = lensVerdicts.filter(Boolean)
+
+  const judgePrompt = `You are the SYNTHESIS JUDGE combining ${LENSES.length} adversarial lens reports on the artifact at ${FINAL_ART}.
 
 Lens reports:
 ${LENSES.map(l => `  - ${OUT_DIR}/verify-${l.id}-${l.label}.md   (Lens ${l.id}, ${l.label})`).join('\n')}
@@ -390,17 +426,16 @@ Write full synthesis to ${validationReport}. Structure:
 Then respond with EXACTLY one line:
   "VERDICT: <GO|REVIEW|NO-GO> — <F> blocking fails, <W> warns — synthesis at ${validationReport}"`
 
-const verdict = await agent(judgePrompt, {
-  label: 'synthesis judge',
-  phase: 'Judge',
-  effort: 'high',
-})
+  verdict = await agent(judgePrompt, {
+    label: 'synthesis judge',
+    phase: 'Judge',
+    effort: 'high',
+  })
+}
 
 return {
   workdir,
   artifact: FINAL_ART,
-  lensReports: LENSES.map(l => `${OUT_DIR}/verify-${l.id}-${l.label}.md`),
-  validationReport,
-  lensVerdicts: survived,
-  verdict,
+  ...(RUN_VERIFY && { lensReports: LENSES.map(l => `${OUT_DIR}/verify-${l.id}-${l.label}.md`), lensVerdicts: lensVerdicts.filter(Boolean) }),
+  ...(RUN_JUDGE  && RUN_VERIFY && { validationReport, verdict }),
 }

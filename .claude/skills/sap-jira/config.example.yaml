@@ -1,0 +1,25 @@
+# SAP Jira MCP Skill Configuration
+# Copy this file to your MCP client env block and edit values accordingly.
+
+# Jira server domain. Default: jira.tools.sap
+JIRA_DOMAIN: "jira.tools.sap"
+
+# Directory to store cookie files (sap_cookies.txt).
+# Must be unique per app MCP to avoid cookie file conflicts.
+# Default: ~/.sap-mcp/cookies/sap-jira
+AUTH_COOKIE_DIR: ""
+
+# AES-256-GCM decryption key for encrypted cookie files.
+# Must match the ENCRYPT_KEY configured in sap-auth-mcp.
+# At least 16 characters. Leave empty if cookies are stored in plain text.
+DECRYPT_KEY: ""
+
+# Jira API token for token-based authentication.
+# When set, API token auth is used instead of cookie auth.
+# Leave empty to use cookie authentication (recommended).
+JIRA_API_TOKEN: ""
+
+# Directory containing jira-config.json template file.
+# Default: dist/ directory of the module installation.
+# Usually does not need to be set manually.
+JIRA_CONFIG_DIR: ""

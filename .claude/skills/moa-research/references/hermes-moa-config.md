@@ -1,5 +1,43 @@
 # Hermes MoA config
 
+## Verify reference models are actually LIVE (do this before every substantive call)
+
+**The single most important check in this skill.** When reference models error or abstain, the Opus aggregator proceeds ALONE — you get a valid solo-Opus answer with zero cross-family diversity, and nothing fails loudly. The only surface tell is a preamble like "N drafts: failed/abstaining" in the output. This has silently degraded whole sessions. A PONG probe does NOT catch it (PONG exercises the aggregator, not the refs).
+
+Run this against your target preset and require `ok == len(refs)`:
+
+```bash
+cd /Users/I321170/Documents/AI_Knowledge/hermes-agent
+./venv/bin/python - <<'PY'
+import sys; sys.path.insert(0, ".")
+from hermes_cli.config import load_config
+from hermes_cli.moa_config import resolve_moa_preset
+from agent.moa_loop import _run_reference
+preset = resolve_moa_preset(load_config().get("moa") or {}, "deep-research")   # your preset
+refs = preset.get("reference_models") or []
+msgs = [{"role":"user","content":"Reply with exactly: OK"}]
+for r in refs:
+    label, text, _ = _run_reference(r, msgs, temperature=0.75, max_tokens=None)
+    good = "OK" in (text or "") and "failed" not in (text or "")
+    print(f"{'✓' if good else '✗'} {label}: {(text or '')[:80]!r}")
+PY
+```
+
+If a ref shows `✗ ... [failed: ...]`, read the error:
+- **`unsupported_parameter ... max_tokens ... use max_completion_tokens`** → an OpenAI-family model (gpt-5/o-series) got sent `max_tokens`. Hermes' `utils.model_forces_max_completion_tokens()` already remaps the known families; if a NEW family 400s, add its name prefix there. Note: MoA's own reference path sends `max_tokens=None` (no cap) so this usually only bites if a `reference_max_tokens` is set on the preset or you curl by hand.
+- **transient (proxy 5xx, rate-limit, timeout)** → just re-run the probe; refs recover on their own. Only debug config if it fails repeatedly.
+
+Confirm the HAI proxy and each model endpoint directly if the probe is ambiguous:
+
+```bash
+# proxy up?
+curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $HAI_PROXY_TOKEN" \
+  http://localhost:6655/openai/v1/models
+# gpt-5.5 present?
+curl -s -H "Authorization: Bearer $HAI_PROXY_TOKEN" http://localhost:6655/openai/v1/models \
+  | python3 -c "import sys,json;print('gpt-5.5' in [m['id'] for m in json.load(sys.stdin)['data']])"
+```
+
 ## Presets
 
 ```
@@ -59,13 +97,17 @@ Bumping max_tokens is necessary but not sufficient. **Opus self-imposes a ~10 KB
 
 - Manual: `hermes moa configure` at a prompt, pick preset, save.
 - Automated (best-effort): set `HERMES_MOA_PRESET=<name>` env var; Hermes may honor it depending on version.
-- Reliable: edit `~/.hermes/config.yaml` directly:
+- Reliable: edit `~/.hermes/config.yaml` directly. There are **three** selectors — set all three (verified 2026-07-16), then restore them when done:
 
 ```yaml
+model:
+  default: <target>          # top-level model.default
 moa:
-  default_preset: deep-research
+  default_preset: <target>
   active_preset: <target>
 ```
+
+`hermes moa list` prints `Active in config: <name>` — use it to confirm the switch and to confirm the restore afterwards.
 
 ## Which preset when
 

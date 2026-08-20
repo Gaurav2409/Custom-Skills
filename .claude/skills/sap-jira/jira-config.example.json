@@ -1,0 +1,94 @@
+{
+  "projects": [
+    {
+      "projectKey": "YOUR_PROJECT",
+      "fieldMappings": {
+        "Test Type": "customfield_10240",
+        "Automation Type": "customfield_44240",
+        "Test Execution Type": "customfield_22442",
+        "Test Path": "customfield_22453",
+        "Epic Name": "customfield_15141",
+        "Git Path": "customfield_44241",
+        "Epic Link": "customfield_15140",
+        "Stack": "customfield_43758",
+        "Sprint": "customfield_12740",
+        "Story Points": "customfield_10013",
+        "Version / Delivery": "fixVersions",
+        "Affects Version/s": "versions",
+        "Labels": "labels"
+      },
+      "create_issue_template": [
+        {
+          "type": "Test",
+          "summary": "",
+          "description": "",
+          "issuetype": { "id": "11902" },
+          "assignee": "YOUR_INUMBER",
+          "labels": ["your-label"],
+          "components": [{ "name": "Your-Component" }],
+          "priority": { "name": "Medium" },
+          "customfield_10240": { "value": "Functional Integration" },
+          "customfield_44240": {
+            "value": "Mobile",
+            "child": { "value": "CT-Component" }
+          },
+          "customfield_22442": { "value": "Manual" },
+          "customfield_22453": "/your/test/repository/path",
+          "customfield_44241": ""
+        },
+        {
+          "type": "Story",
+          "summary": "",
+          "description": "",
+          "issuetype": { "id": "10500" },
+          "assignee": "YOUR_INUMBER",
+          "components": [{ "name": "Your-Component" }],
+          "priority": { "name": "Medium" },
+          "customfield_43758": [{ "value": "Mobile Client(Android)" }],
+          "customfield_15140": "",
+          "fixVersions": [{ "name": "your-version" }],
+          "versions": [{ "name": "your-version" }]
+        },
+        {
+          "type": "Bug",
+          "summary": "",
+          "description": "*current behavior:*\n\n\n*expected behavior:*\n\n\n*steps to reproduce:*\n1. \n2. \n3. \n\n*environment:*\ninstance: \nuser: \ndevice: ",
+          "issuetype": { "id": "1" },
+          "assignee": "YOUR_INUMBER",
+          "components": [{ "name": "" }],
+          "priority": { "name": "Medium" },
+          "versions": [{ "name": "your-version" }]
+        }
+      ]
+    }
+  ],
+  "masking": {
+    "enabled": false,
+    "partialMask": { "enabled": true, "visibleStart": 2, "visibleEnd": 2 },
+    "fieldNames": [
+      "emailAddress",
+      "displayName",
+      "name",
+      "author.displayName",
+      "creator.displayName",
+      "reporter.displayName",
+      "assignee.displayName",
+      "assignee.name",
+      "reporter.name",
+      "creator.name",
+      "lead.displayName"
+    ],
+    "patterns": [
+      {
+        "type": "email",
+        "regex": "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}",
+        "replacement": "[EMAIL REDACTED]"
+      },
+      {
+        "type": "inumber",
+        "regex": "\\b[IiDd]\\d{5,7}\\b",
+        "replacement": "[ID REDACTED]"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+JIRA_DOMAIN: "smejira.tools.sap"
+# Cookie dir for smejira authentication (separate from jira.tools.sap)
+AUTH_COOKIE_DIR: "~/.sap-mcp/cookies/smejira"
+DECRYPT_KEY: ""
+# x4-bc codebase root — used for code analysis and fix drafting
+X4_BC_ROOT: "~/Documents/x4-bc"
+# Default JQL for CBC Ravenclaw open sprint issues
+DEFAULT_JQL: 'project = CBC and "Responsible Team" = Ravenclaw and issuetype in (story, Bug, "Hotfix sub-task", Task) and sprint in openSprints()'
+# Where to write sprint analysis reports
+REPORT_DIR: "~/.cbc-dev-agent/reports"

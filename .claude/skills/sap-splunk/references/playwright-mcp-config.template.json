@@ -1,0 +1,16 @@
+{
+  "_comment_why": "Re-enable Chromium HttpsUpgrades feature, which @playwright/mcp hardcodes off via chromiumSwitches.ts. Required for SAP Splunk DCs (dc22/25/33/34/52/55/80/81/82/84) where the server returns Location: http://... and the browser otherwise obeys the downgrade and stalls on firewalled port 80.",
+  "_comment_how": "Playwright's ignoreDefaultArgs uses exact-string match against launch args. We list the full default --disable-features string verbatim to drop it, then re-add it via args without HttpsUpgrades.",
+  "_comment_fragility": "If @playwright/mcp upgrades and changes any feature in the disable list (added, removed, renamed, reordered), the exact-match below will silently fail and HttpsUpgrades returns to disabled. Pin @playwright/mcp version, OR add a runtime check that greps the actual launched browser args.",
+
+  "browser": {
+    "launchOptions": {
+      "ignoreDefaultArgs": [
+        "--disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion"
+      ],
+      "args": [
+        "--disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion"
+      ]
+    }
+  }
+}

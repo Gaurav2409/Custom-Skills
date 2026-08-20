@@ -7,7 +7,36 @@ description: Launch Hermes agent with secure keychain credentials and browser-ha
 
 Hermes is a local AI agent (v0.12.0) at `/Users/I321170/Documents/AI_Knowledge/hermes-agent`.
 
-## Secure launcher
+## COST GUARDRAIL — READ BEFORE EVERY INVOCATION
+
+**Do NOT use `hermes chat -s browser-harness` for web fetch or search. Use `fetch-sources` instead.**
+
+```bash
+# fetch-sources handles the full ladder: static → Jina → Playwright → browser-harness
+fetch-sources --urls urls.txt --out ./web-sources/ --id my-topic
+
+# Auth/SAP SSO pages
+fetch-sources --urls urls.txt --out ./web-sources/ --id my-topic --browser-harness
+
+# Search queries
+TAVILY_API_KEY=$(security find-generic-password -a hermes-agent -s TAVILY_API_KEY -w) \
+fetch-sources --queries queries.txt --out ./web-sources/ --id my-topic
+```
+
+Why: `hermes chat` calls an LLM on every turn (cost) and injects synthesis into saved files (contamination). `fetch-sources` does pure HTTP fetch with no LLM involvement.
+
+**CRITICAL: `--preset` is NOT a valid `hermes chat` flag** — silently ignored.
+**CRITICAL: config.yaml swapping does NOT work** — MoA gateway caches presets at startup.
+
+If you must use `hermes chat` for non-fetch work, bypass MoA with:
+```bash
+~/.hermes/hermes-secure.sh chat -q "..." \
+  --provider custom:hai-anthropic -m claude-sonnet-latest ...
+```
+
+Use `hermes chat` only for: synthesis tasks, agentic multi-step work, tasks that genuinely need an LLM agent in the loop. Use `fetch-sources` for: all web research, URL fetching, search queries.
+
+
 
 `~/.hermes/hermes-secure.sh` reads all API keys from macOS Keychain and exports them before launching hermes. It accepts all standard hermes flags via `"$@"`. This is the only way to launch hermes — never call the binary directly (keys won't be set).
 

@@ -1,0 +1,15 @@
+# SAP ServiceNow ITSM Skill Configuration
+# Copy this file to config.yaml and edit values accordingly.
+
+# ServiceNow instance domain. Default: itsm.services.sap
+SNOW_DOMAIN: "itsm.services.sap"
+
+# Directory to store cookie files (sap_cookies.txt).
+# Must be unique per app skill to avoid cookie file conflicts.
+# Default: ~/.sap-mcp/cookies/sap-snow
+AUTH_COOKIE_DIR: ""
+
+# AES-256-GCM decryption key for encrypted cookie files.
+# Must match the ENCRYPT_KEY configured in sap-authentication.
+# At least 16 characters. Leave empty if cookies are stored in plain text.
+DECRYPT_KEY: ""

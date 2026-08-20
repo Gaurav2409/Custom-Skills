@@ -1,0 +1,20 @@
+# SAP Wiki Skill Configuration
+# Copy this file to skills/sap-wiki/config.yaml and edit values accordingly.
+
+# Wiki server domain. Default: wiki.one.int.sap
+WIKI_DOMAIN: "wiki.one.int.sap"
+
+# Directory to store cookie files (sap_cookies.txt).
+# Must be unique per app skill to avoid cookie file conflicts.
+# Default: ~/.sap-mcp/cookies/sap-wiki
+AUTH_COOKIE_DIR: ""
+
+# AES-256-GCM decryption key for encrypted cookie files.
+# Must match the ENCRYPT_KEY configured in sap-auth-mcp.
+# At least 16 characters. Leave empty if cookies are stored in plain text.
+DECRYPT_KEY: ""
+
+# Wiki API token (Personal Access Token) for token-based authentication.
+# When set, PAT auth is used instead of cookie auth.
+# Leave empty to use cookie authentication (recommended for SAP Wiki).
+WIKI_API_TOKEN: ""

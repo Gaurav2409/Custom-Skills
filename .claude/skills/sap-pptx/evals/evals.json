@@ -1,0 +1,118 @@
+{
+  "skill_name": "sap-pptx",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a new SAP presentation with a cover slide titled 'Q4 2026 Business Review' and save it as quarterly_review.pptx",
+      "expected_output": "A PPTX file created with SAP branding and a cover slide with the specified title",
+      "files": [],
+      "assertions": [
+        "Output file quarterly_review.pptx is created",
+        "File is a valid PowerPoint file",
+        "Contains at least one slide",
+        "Uses SAP template styling"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create an SAP presentation with these slides: a Cover A slide titled 'Product Launch', an Agenda A slide, and a Title and Text slide about features. Save as product_launch.pptx",
+      "expected_output": "A PPTX file with 3 slides using the specified layouts",
+      "files": [],
+      "assertions": [
+        "Output file product_launch.pptx is created",
+        "Contains exactly 3 slides",
+        "First slide uses Cover A layout",
+        "Second slide uses Agenda A layout",
+        "Third slide uses Title and Text layout"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Read the presentation at evals/files/sample.pptx and tell me how many slides it has and what layouts are used",
+      "expected_output": "JSON or text output showing slide count and layout information",
+      "files": ["evals/files/sample.pptx"],
+      "assertions": [
+        "Output includes slide count",
+        "Output includes layout names for each slide",
+        "Format is structured (JSON or clear text)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add a new 'Thank You A' slide to evals/files/sample.pptx and save as updated_presentation.pptx",
+      "expected_output": "Modified presentation with an additional Thank You slide",
+      "files": ["evals/files/sample.pptx"],
+      "assertions": [
+        "Output file updated_presentation.pptx is created",
+        "Has one more slide than the original",
+        "Last slide uses Thank You A layout"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "What slide layouts are available in the SAP template? Show me the content-focused layouts.",
+      "expected_output": "List of available layouts, filtered or highlighted for content layouts",
+      "files": [],
+      "assertions": [
+        "Lists Title and Text layout",
+        "Lists column-based layouts",
+        "Includes layout descriptions or categories"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "hey can you make me a quick SAP ppt with like 3 slides - intro, some bullet points, and a thank you at the end?",
+      "expected_output": "A 3-slide SAP presentation with cover, content, and closing slides",
+      "files": [],
+      "assertions": [
+        "Handles casual language",
+        "Creates appropriate slide structure",
+        "Uses SAP template"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Extract all the text content from evals/files/sample.pptx",
+      "expected_output": "Plain text extraction of all slide content",
+      "files": ["evals/files/sample.pptx"],
+      "assertions": [
+        "Extracts text from all slides",
+        "Text is readable and organized by slide",
+        "Includes titles and body text"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Create a presentation using the 'Title and Text: 2 Columns' layout comparing cloud vs on-premise solutions",
+      "expected_output": "Presentation with a two-column comparison slide",
+      "files": [],
+      "assertions": [
+        "Uses the two-column layout",
+        "Content is organized in columns",
+        "Topic relates to cloud vs on-premise"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "What are the SAP brand colors I should use in my presentation?",
+      "expected_output": "Information about SAP color palette with hex codes",
+      "files": [],
+      "assertions": [
+        "Mentions SAP Blue (#1B90FF)",
+        "Includes accent colors",
+        "Provides hex codes or RGB values"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Delete slide 2 from evals/files/sample.pptx and save the result",
+      "expected_output": "Presentation with slide 2 removed",
+      "files": ["evals/files/sample.pptx"],
+      "assertions": [
+        "Output file is created",
+        "Has one fewer slide than original",
+        "Correct slide was removed"
+      ]
+    }
+  ]
+}

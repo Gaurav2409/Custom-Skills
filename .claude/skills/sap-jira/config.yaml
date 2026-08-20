@@ -1,0 +1,5 @@
+JIRA_DOMAIN: "smejira.tools.sap"
+AUTH_COOKIE_DIR: "~/.sap-mcp/cookies/sap-smejira"
+DECRYPT_KEY: ""
+JIRA_API_TOKEN: ""
+JIRA_CONFIG_DIR: ""

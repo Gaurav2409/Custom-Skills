@@ -1,0 +1,23 @@
+# SAP Splunk Search Skill Configuration
+# Copy this file to config.yaml and edit values accordingly.
+
+# Default Splunk instance for searches.
+# 'orf' (recommended) is a cross-DC search head that indexes all 37+ DCs and is
+# sufficient for almost all queries — filter by host=*dc25*, index=..., etc.
+# Override with a specific DC (e.g. dc60, dc66) only when you know the scope.
+# Note: dc22, dc25, dc33, dc34, dc52, dc55, dc80, dc81, dc82, dc84 are unsupported
+# by default — see references/known-issues.md and root README.
+# See SKILL.md for full instance list.
+SPLUNK_INSTANCE: "orf"
+
+# Base directory to store cookie files (sap_cookies.txt).
+# Each instance gets its own subdirectory:
+#   Default instance: {AUTH_COOKIE_DIR}/sap_cookies.txt
+#   Other instances:  {AUTH_COOKIE_DIR}-{instance}/sap_cookies.txt
+# Default: ~/.sap-mcp/cookies/sap-splunk
+AUTH_COOKIE_DIR: ""
+
+# AES-256-GCM decryption key for encrypted cookie files.
+# Must match the ENCRYPT_KEY configured in sap-authentication.
+# At least 16 characters. Leave empty if cookies are stored in plain text.
+DECRYPT_KEY: ""
